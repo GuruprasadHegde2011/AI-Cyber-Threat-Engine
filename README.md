@@ -1,59 +1,55 @@
-# Autonomous Network Intrusion Detection Engine (ANIDE)
+# AI-Cyber-Threat-Engine
 
-An enterprise-grade, unsupervised machine learning pipeline engineered to detect zero-day network anomalies and stealthy cyber threats using isolation dynamics. By establishing a behavioral baseline from telemetry logs, the system bypasses traditional signature-based limitations to isolate multi-vector attacks without prior labeling.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
+
+An unsupervised machine learning pipeline designed for real-time anomaly detection and zero-day network attack mitigation[cite: 1]. By moving away from rigid, signature-based detection systems, this engine models baseline network behavior to isolate unknown structural threats before signatures are published[cite: 1].
 
 ---
 
-## 🛠️ System Architecture & Mechanics
+## 🚀 Features
 
-The pipeline is split into two distinct operational phases: synthetic telemetry engineering and mathematical isolation scoring.
+* **Unsupervised Threat Isolation:** Utilizes non-linear isolation structures to catch zero-day exploits without prior training labels[cite: 1].
+* **High-Dimensional Feature Engineering:** Extracts dynamic network metrics including packet length variance, inter-arrival times, and TCP flag entropy.
+* **Modular Pipeline Architecture:** Built with a strict separation of concerns between data ingestion, preprocessing, modeling, and alerting.
 
-### 1. Data Engineering Phase (`generator.py`)
-Generates a highly imbalanced dataset containing `2,030` telemetry logs simulating an enterprise network environment:
-* **Baseline Traffic (2,000 logs):** Low request rates (5–50 req/min), standard payload sizes (0.1–15 MB), and minimal unauthorized port probes.
-* **Anomalous Injections (30 logs):** Mimics multi-vector attack profiles including Distributed Denial of Service (DDoS), Exfiltration (high data transfer volume), and Horizontal Port Scanning.
+---
 
-### 2. Machine Learning Phase (`engine.py`)
-Utilizes the **Isolation Forest** algorithm. Instead of modeling profiling metrics of normal data points, the algorithm explicitly isolates anomalies by building random decision trees.
+## 📐 Mathematical Framework
+
+The core engine leverages an **Isolation Forest** ensemble architecture[cite: 1]. Unlike traditional anomaly detection techniques that attempt to construct a profile of "normal" data points and flag variations, this model explicitly isolates anomalies based on their inherent geometric property: **they are few and different.**
+
+### 1. Path Length and Anomaly Scoring
+
+Anomalies require fewer random splits to isolate in a binary tree structure compared to normal data points. The engine evaluates data instances using a normalized anomaly score $s(x, n)$:
 
 $$s(x, n) = 2^{-\frac{E(h(x))}{c(n)}}$$
 
-Where $h(x)$ is the path length of observation $x$, $c(n)$ is the average path length of an unsuccessful search in a Binary Search Tree, and $n$ is the number of external nodes. Anomalies require significantly fewer splits to isolate, resulting in shorter path lengths and an anomaly score closer to $1.0$.
+Where:
+* $h(x)$ is the path length of observation $x$ (the number of edges $x$ traverses from the root node to an external terminating node).
+* $E(h(x))$ is the expected value of $h(x)$ across an ensemble of isolation trees.
+* $c(n)$ is the average path length of an unsuccessful search in a Binary Search Tree (BST) built over $n$ instances, acting as the normalization factor:
+
+$$c(n) = 2 \ln(n - 1) + 0.5772156649 - \frac{2(n - 1)}{n}$$
+
+### 2. Decision Boundaries
+* If the score $s \to 1$, the instance exhibits a significantly short path length across the ensemble and is flagged as an active network threat.
+* If $s \ll 0.5$, the observation is deeply integrated into dense clusters, representing safe, baseline network traffic.
 
 ---
 
-## 📊 Core Feature Matrix
-
-The model evaluates four key network dimensions to compute isolation profiles:
-
-| Feature Variable | Metric | Description |
-| :--- | :--- | :--- |
-| `request_count_per_min` | Integer | Volume of inbound requests to detect brute-force/DDoS signals. |
-| `data_transferred_mb` | Float | Payload size tracking outbound data movement to flag exfiltration. |
-| `cpu_utilization_pct` | Float | Server processor load indicating processing stress from exploitation. |
-| `unauthorized_ports_touched` | Integer | Count of non-whitelisted ports targeted during exploratory scanning. |
-
----
-
-## 🔬 Performance Analysis & Validation
-
-The system achieves near-perfect classification on highly imbalanced telemetry arrays, ensuring zero false negatives on catastrophic security threats.
+## 📁 Repository Structure
 
 ```text
-================== 🔬 PERFORMANCE ANALYSIS REPORT ==================
-               precision    recall  f1-score   support
-
-           0       1.00      1.00      1.00      2000
-           1       0.97      1.00      0.98        30
-
-    accuracy                           1.00      2030
-   macro avg       0.98      1.00      0.99      2030
-weighted avg       1.00      1.00      1.00      2030
-====================================================================
----
-
-## 🚀 Deployment & Local Execution
-
-```bash
-python generator.py
-python engine.py
+AI-Cyber-Threat-Engine/
+│
+├── data/                  # Sample PCAP logs or network traffic datasets
+├── src/                   # Core engine source code
+│   ├── __init__.py
+│   ├── preprocessing.py   # Feature extraction and packet cleaning
+│   ├── model.py           # Isolation Forest framework initialization
+│   └── main.py            # Execution entry point
+├── tests/                 # Automated unit tests
+│   └── test_model.py
+├── requirements.txt       # Software dependencies
+└── README.md              # Project documentation
